@@ -44,27 +44,26 @@ def get_db_connection():
 
 # Automatically create database and table
 def initialize_database():
-
-    # Connect to MySQL server (without selecting database)
-    connection = pymysql.connect(
-        host=MYSQL_HOST,
-        user=MYSQL_USER,
-        password=MYSQL_PASSWORD,
-        port=3306
-    )
+    connection = None
+    for attempt in range(10):
+        try:
+            connection = pymysql.connect(
+                host=MYSQL_HOST,
+                user=MYSQL_USER,
+                password=MYSQL_PASSWORD,
+                port=3306,
+            )
+            break
+        except pymysql.MySQLError as e:
+            print(f"Init connection attempt {attempt + 1} failed: {e}")
+            time.sleep(3)
+    else:
+        raise Exception("Could not connect to MySQL for initialization.")
 
     try:
         with connection.cursor() as cursor:
-
-            # Create database if it doesn't exist
-            cursor.execute(
-                f"CREATE DATABASE IF NOT EXISTS `{MYSQL_DB}`"
-            )
-
-            # Select database
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{MYSQL_DB}`")
             cursor.execute(f"USE `{MYSQL_DB}`")
-
-            # Create employees table if it doesn't exist
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS employees (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -73,10 +72,8 @@ def initialize_database():
                     email VARCHAR(100) NOT NULL
                 )
             """)
-
         connection.commit()
         print(f"Database '{MYSQL_DB}' and employees table are ready!")
-
     finally:
         connection.close()
 
