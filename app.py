@@ -20,6 +20,28 @@ MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'password')
 MYSQL_DB = os.getenv('MYSQL_DB', 'company_db')
 
 
+def get_db_connection():
+    """Connects to the database, retrying if it's not ready yet."""
+
+    for attempt in range(5):
+        try:
+            return pymysql.connect(
+                host=MYSQL_HOST,
+                user=MYSQL_USER,
+                password=MYSQL_PASSWORD,
+                database=MYSQL_DB,
+                port=3306,
+                cursorclass=pymysql.cursors.DictCursor
+            )
+
+        except pymysql.MySQLError as e:
+            print(f"Database connection attempt {attempt + 1} failed: {e}")
+            time.sleep(2)
+
+    raise Exception("Could not connect to the MySQL database.")
+
+
+
 # Automatically create database and table
 def initialize_database():
 
@@ -57,27 +79,6 @@ def initialize_database():
 
     finally:
         connection.close()
-
-
-def get_db_connection():
-    """Connects to the database, retrying if it's not ready yet."""
-
-    for attempt in range(5):
-        try:
-            return pymysql.connect(
-                host=MYSQL_HOST,
-                user=MYSQL_USER,
-                password=MYSQL_PASSWORD,
-                database=MYSQL_DB,
-                port=3306,
-                cursorclass=pymysql.cursors.DictCursor
-            )
-
-        except pymysql.MySQLError as e:
-            print(f"Database connection attempt {attempt + 1} failed: {e}")
-            time.sleep(2)
-
-    raise Exception("Could not connect to the MySQL database.")
 
 
 @app.route('/')
