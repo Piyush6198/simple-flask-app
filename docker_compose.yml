@@ -32,7 +32,8 @@ services:
       MYSQL_DB: company_db
     
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
     networks:
       - two_tier_app
